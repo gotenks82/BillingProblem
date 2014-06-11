@@ -3,10 +3,6 @@ package Billing;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
-
-import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
-import com.sun.jmx.snmp.Timestamp;
 
 public class Billing {
 
@@ -28,6 +24,7 @@ public class Billing {
 	}
 	
 	public static double getTotalAmount(Calendar start, Calendar end) {
+		
 		double result = 0.0;
 		if(start!=null && end!= null) {
 			BillingConfiguration bConfiguration = new BillingConfiguration();

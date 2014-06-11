@@ -1,9 +1,6 @@
 package Billing;
 
 import java.util.Calendar;
-import java.util.Date;
-
-import javax.net.ssl.SSLContext;
 
 public class TimeSlice {
 	private int startHour;
@@ -19,34 +16,44 @@ public class TimeSlice {
 	
 	public double getTotal(Calendar start, Calendar end) {
 		double total = 0.0;
+		//check if range is across multiple days
+		Calendar midnight = (Calendar) start.clone();
+		clearTime(midnight);
+		midnight.set(Calendar.HOUR_OF_DAY, 0);
+		midnight.add(Calendar.DATE, 1);
+		if (end.after(midnight)) {
+			total += getTotal(midnight, end); //elaborate "today's quote" and recursively call method on future slices
+			end = midnight;
+		}		
 		Calendar s = (Calendar) start.clone();
-		s.clear(Calendar.MINUTE);
-		s.clear(Calendar.SECOND);
+		clearTime(s);
 		s.set(Calendar.HOUR_OF_DAY, startHour);
-		Calendar e = (Calendar) end.clone(); 
-		e.clear(Calendar.MINUTE);
-		e.clear(Calendar.SECOND);
+		Calendar e = (Calendar) start.clone(); 
+		clearTime(e);
 		if(endHour != 24) {
 			e.set(Calendar.HOUR_OF_DAY, endHour);
-		}else {
+		} else {
 			e.set(Calendar.HOUR_OF_DAY, 0);
 			e.add(Calendar.DATE, 1);
 		}
 		
-		if( start.before(e) && end.after(s) ) {
+		if( start.compareTo(e) <=0 && end.compareTo(s) >= 0 ) {
 			if (s.before(start)) s = (Calendar) start.clone();
 			if (e.after(end)) e = (Calendar) end.clone() ;
-			double days = daysBetween(s, e);
-			total += days*getMaxMinutesPerSlice()*price;
-			e.set(Calendar.YEAR, s.get(Calendar.YEAR));
-			e.set(Calendar.MONTH, s.get(Calendar.MONTH));
-			e.set(Calendar.DATE, s.get(Calendar.DATE));
 			double minutes = Math.floor((e.getTimeInMillis() - s.getTimeInMillis())/(60 * 1000));
 			if(minutes >0 ) total += minutes*price;
 		} 
 		return total;
 	}
 	
+	private static void clearTime(Calendar c) {
+		c.clear(Calendar.MINUTE);
+		c.clear(Calendar.SECOND);
+		c.clear(Calendar.MILLISECOND);
+		c.clear(Calendar.HOUR_OF_DAY);
+	}
+	
+
 	public int getMaxMinutesPerSlice() {
 		return (endHour - startHour)*60;
 	}
@@ -71,21 +78,5 @@ public class TimeSlice {
 	public void setStartHour(int startHour) {
 		this.startHour = startHour;
 	}
-	
-	private long daysBetween(Calendar startDate, Calendar endDate) {  
-		//assert: startDate must be before endDate  
-		Calendar date = (Calendar) startDate.clone();
-		date.set(Calendar.HOUR_OF_DAY, endDate.get(Calendar.HOUR_OF_DAY));
-		date.set(Calendar.MINUTE, endDate.get(Calendar.MINUTE));
-		date.set(Calendar.MINUTE, endDate.get(Calendar.MINUTE));
-		date.set(Calendar.MILLISECOND, endDate.get(Calendar.MILLISECOND));
-		long daysBetween = 0;  
-		while (date.before(endDate)) {  
-			date.add(Calendar.DAY_OF_MONTH, 1);  
-			daysBetween++;  
-		}  
-		return daysBetween;  
-	}  
-	
 	
 }
